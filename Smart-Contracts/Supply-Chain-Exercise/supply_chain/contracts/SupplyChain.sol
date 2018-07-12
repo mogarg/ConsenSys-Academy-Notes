@@ -3,7 +3,7 @@ pragma solidity ^0.4.23;
 contract SupplyChain {
 
     /* set owner */
-    address public owner;
+    address owner;
 
     /* Add a variable called skuCount to track the most recent sku # */
     uint skuCount;
@@ -49,8 +49,8 @@ contract SupplyChain {
     event Received(uint sku);
 
     /* Create a modifer that checks if the msg.sender is the owner of the contract */
-    modifier isOwner (address _address) {
-        require(owner == _address);
+    modifier isOwner () {
+        require(msg.sender == owner);
         _;
     }
 
@@ -135,7 +135,7 @@ contract SupplyChain {
     function shipItem(uint sku)
         public
         sold(sku)
-        isOwner(items[sku].seller)
+        verifyCaller(items[sku].seller)
     {
         emit Shipped(sku);
         items[sku].state = uint(State.Shipped);
