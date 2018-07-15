@@ -1,94 +1,282 @@
-import React, { Component } from 'react'
-import SimpleStorageContract from '../build/contracts/SimpleStorage.json'
-import getWeb3 from './utils/getWeb3'
+import React, { Component } from 'react';
+import SupplyChainContract from '../build/contracts/SupplyChain.json';
+import getWeb3 from './utils/getWeb3';
 
-import './css/oswald.css'
-import './css/open-sans.css'
-import './css/pure-min.css'
-import './App.css'
+import './css/oswald.css';
+import './css/open-sans.css';
+import './css/pure-min.css';
+import './App.css';
 
 class App extends Component {
-  constructor(props) {
-    super(props)
+    constructor() {
+        super();
 
-    this.state = {
-      storageValue: 0,
-      web3: null
+        this.state = {
+            inventory: [],
+            contractInstance: '',
+            sku: '',
+            name: '',
+            price: '',
+            web3: null
+        };
+
+        this.handleChange = this.handleChange.bind(this);
+        this.getInventory = this.getInventory.bind(this);
+        this.addItem = this.addItem.bind(this);
+        this.buyItem = this.buyItem.bind(this);
+        this.shipItem = this.shipItem.bind(this);
+        this.receiveItem = this.receiveItem.bind(this);
     }
-  }
 
-  componentWillMount() {
-    // Get network provider and web3 instance.
-    // See utils/getWeb3 for more info.
+    componentWillMount() {
+        getWeb3
+            .then((results) => {
+                this.setState({
+                    web3: results.web3
+                });
 
-    getWeb3
-    .then(results => {
-      this.setState({
-        web3: results.web3
-      })
+                this.instantiateContract();
+            })
+            .catch(() => {
+                console.log('Error finding web3.');
+            });
+    }
 
-      // Instantiate contract once web3 provided.
-      this.instantiateContract()
-    })
-    .catch(() => {
-      console.log('Error finding web3.')
-    })
-  }
+    handleChange(key, value) {
+        this.setState({
+            [key]: value
+        });
+    }
 
-  instantiateContract() {
-    /*
-     * SMART CONTRACT EXAMPLE
-     *
-     * Normally these functions would be called in the context of a
-     * state management library, but for convenience I've placed them here.
-     */
+    instantiateContract() {
+        const contract = require('truffle-contract');
+        const SupplyChain = contract(SupplyChainContract);
+        SupplyChain.setProvider(this.state.web3.currentProvider);
 
-    const contract = require('truffle-contract')
-    const simpleStorage = contract(SimpleStorageContract)
-    simpleStorage.setProvider(this.state.web3.currentProvider)
+        this.setState({ contractInstance: SupplyChain });
+    }
 
-    // Declaring this for later so we can chain functions on SimpleStorage.
-    var simpleStorageInstance
+    getInventory(event) {
+        event.preventDefault();
+        const { contractInstance, sku } = this.state;
 
-    // Get accounts.
-    this.state.web3.eth.getAccounts((error, accounts) => {
-      simpleStorage.deployed().then((instance) => {
-        simpleStorageInstance = instance
+        contractInstance
+            .deployed()
+            .then((instance) => {
+                return instance.fetchItem(sku);
+            })
+            .then((result) => {
+                const { inventory } = this.state;
+                var name = result[0];
+                var sku = result[1].c[0];
+                var price = result[2].c[0];
+                var state = result[3].c[0];
+                var seller = result[4];
+                var buyer = result[5];
 
-        // Stores a given value, 5 by default.
-        return simpleStorageInstance.set(5, {from: accounts[0]})
-      }).then((result) => {
-        // Get the value from the contract to prove it worked.
-        return simpleStorageInstance.get.call(accounts[0])
-      }).then((result) => {
-        // Update state with the result.
-        return this.setState({ storageValue: result.c[0] })
-      })
-    })
-  }
+                var item = {
+                    Name: name,
+                    SKU: sku,
+                    Price: price,
+                    State: state,
+                    Seller: seller,
+                    Buyer: buyer
+                };
 
-  render() {
-    return (
-      <div className="App">
-        <nav className="navbar pure-menu pure-menu-horizontal">
-            <a href="#" className="pure-menu-heading pure-menu-link">Truffle Box</a>
-        </nav>
+                inventory.push(item);
 
-        <main className="container">
-          <div className="pure-g">
-            <div className="pure-u-1-1">
-              <h1>Good to Go!</h1>
-              <p>Your Truffle Box is installed and ready.</p>
-              <h2>Smart Contract Example</h2>
-              <p>If your contracts compiled and migrated successfully, below will show a stored value of 5 (by default).</p>
-              <p>Try changing the value stored on <strong>line 59</strong> of App.js.</p>
-              <p>The stored value is: {this.state.storageValue}</p>
+                console.log(inventory);
+
+                return this.setState({
+                    inventory: inventory
+                });
+            });
+    }
+
+    addItem(event) {
+        event.preventDefault();
+        const { web3, contractInstance, name, price } = this.state;
+
+        web3.eth.getAccounts((error, accounts) => {
+            const user = accounts[0];
+
+            contractInstance.deployed().then((instance) => {
+                return instance.addItem(name, price, { from: user });
+            });
+        });
+
+        this.setState({
+            name: '',
+            price: ''
+        });
+    }
+
+    buyItem(event) {
+        event.preventDefault();
+        const { web3, contractInstance, sku } = this.state;
+
+        web3.eth.getAccounts((error, accounts) => {
+            const user = accounts[0];
+
+            contractInstance.deployed().then((instance) => {
+                return instance.buyItem(sku, { from: user });
+            });
+        });
+    }
+
+    shipItem(event) {
+        event.preventDefault();
+        const { web3, contractInstance, sku } = this.state;
+
+        web3.eth.getAccounts((error, accounts) => {
+            const user = accounts[0];
+
+            contractInstance.deployed().then((instance) => {
+                return instance.shipItem(sku, { from: user });
+            });
+        });
+    }
+
+    receiveItem(event) {
+        event.preventDefault();
+        const { web3, contractInstance, sku } = this.state;
+
+        web3.eth.getAccounts((error, accounts) => {
+            const user = accounts[0];
+
+            contractInstance.deployed().then((instance) => {
+                return instance.receiveItem(sku, { from: user });
+            });
+        });
+    }
+
+    render() {
+        const { inventory } = this.state;
+
+        const displayInventory = inventory.map((elem, i) => {
+            return (
+                <div key={i}>
+                    <p>Name: {elem.Name}</p>
+                    <p>SKU: {elem.SKU}</p>
+                    <p>Price: {elem.Price} wei</p>
+                </div>
+            );
+        });
+
+        return (
+            <div className="App">
+                <nav className="navbar pure-menu pure-menu-horizontal">
+                    <h1 style={{ color: 'white' }}>Supply Chain DApp</h1>
+                </nav>
+
+                <main className="container">
+                    <div className="pure-g">
+                        <div className="pure-u-1-1">
+                            <br />
+                            <br />
+                            <h2>Objective: </h2>
+                            <p>Coming soon...</p>
+                            <h3>Create a New Item</h3>
+                            <form onSubmit={(e) => this.addItem(e)}>
+                                <label>
+                                    Item Name: <br />
+                                    <input
+                                        value={this.state.name}
+                                        onChange={(e) =>
+                                            this.handleChange(
+                                                'name',
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+                                </label>
+                                <br />
+                                <label>
+                                    Price (wei): <br />
+                                    <input
+                                        value={this.state.price}
+                                        onChange={(e) =>
+                                            this.handleChange(
+                                                'price',
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+                                </label>
+                                <br />
+                                <input type="submit" value="Submit" />
+                            </form>
+                            <h3>Buy an Item</h3>
+                            <form onSubmit={(e) => this.buyItem(e)}>
+                                <label>
+                                    Item SKU: <br />
+                                    <input
+                                        onChange={(e) =>
+                                            this.handleChange(
+                                                'sku',
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+                                </label>
+                                <br />
+                                <input type="submit" value="Submit" />
+                            </form>
+                            <h3>Ship Item (Seller Only)</h3>
+                            <form onSubmit={(e) => this.shipItem(e)}>
+                                <label>
+                                    Item SKU: <br />
+                                    <input
+                                        onChange={(e) =>
+                                            this.handleChange(
+                                                'sku',
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+                                </label>
+                                <br />
+                                <input type="submit" value="Submit" />
+                            </form>
+                            <h3>Mark as Received (Buyer Only)</h3>
+                            <form onSubmit={(e) => this.receiveItem(e)}>
+                                <label>
+                                    Item SKU: <br />
+                                    <input
+                                        onChange={(e) =>
+                                            this.handleChange(
+                                                'sku',
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+                                </label>
+                                <br />
+                                <input type="submit" value="Submit" />
+                            </form>
+                            <h3>Search for an Item</h3>
+                            <form onSubmit={(e) => this.getInventory(e)}>
+                                <label>
+                                    Item SKU: <br />
+                                    <input
+                                        onChange={(e) =>
+                                            this.handleChange(
+                                                'sku',
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+                                </label>
+                                <br />
+                                <input type="submit" value="Submit" />
+                                {displayInventory}
+                            </form>
+                        </div>
+                    </div>
+                </main>
             </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
+        );
+    }
 }
 
-export default App
+export default App;
