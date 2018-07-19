@@ -87,6 +87,66 @@
 
 ### To be continued...
 
+## Saftey Checklist
+
+-   Creating comprehensive unit tests ensures that the logic of the smart contract performs as expected, even after changes to the code are made.
+
+-   Following best practices and standards reduces the risk of bugs occuring
+-   Avoiding complex rules and implementation can also reduce the change for bugs to appear.
+
+### Recursive Calls
+
+-   [Very dangerous!](https://youtu.be/Q8Sw3a1IOCw?t=33s) This is how reentrancy attacks are introduced.
+    -   Fun fact: This is the bug exploit used in the DAO hack
+
+### Integer Arithmetic Overflow
+
+-   Integers in Solidity wrap around if they become too large or too small
+-   Max uint value is 2^256 - 1 which is an enormous number.
+-   uint 8 only needs to reach 257 befor it wraps back to 0. Values that are too small wrap around to the largest possible value.
+-   Use the [SafeMath](https://github.com/OpenZeppelin/openzeppelin-solidity/blob/master/contracts/math/SafeMath.sol) library to protect yourself.
+
+### Poison Data
+
+-   Data that is inputted that contains either malicious code or intentionally bad values can have serious ramifications.
+-   Never assume users will be competent or good samaritans, always sanitize and check inputs.
+-   Require statements are also great for protecting the smart contract.
+
+### Exposure
+
+-   Solidity functions default to public, therefore it is easy to accidentally expose functions that should only be accessible to the contract.
+
+-   Production code should always be audited
+-   All storage variables on the blockchain are public, making them private only makes them inaccessible to other contracts directly but they can still be read on the blockchain.
+
+### Miner Vulnerabilities
+
+-   The global blocktimestamp can be manipulated by miners, do not depend on the timestamp for anything important.
+
+### Malicious Admins
+
+-   Certain addresses may have priveledged functions, this is usually done for pausable or removeable contracts.
+-   Limiting the power held by the admin should be considered
+-   Multisignature contracts reduce the risk of a malicious party controlling the contract but also increase the implementation complexity.
+
+### Off Chain Safety
+
+-   Using traditional web security practices is also another good layer of protection to conisder common practices such as: HTTPS, MFA, and encrypting data are all good methods.
+
+### [Cross Chain Replay Attack](http://hackingdistributed.com/2016/07/17/cross-chain-replay/)
+
+-   This occurs following a hard fork in the blockchain where two chains are created i.e. Chain A (original) and Chain B (fork). Note: This is only realistic in instances where a smart contract or exchange is using both chains.
+
+    -   All of the transactions on Chain A are valid on Chain B
+    -   Transactions on Chain A can be "replayed" through a smart contract on Chain B without the address holder on Chain A's consent.
+    -   This can give the attacker an advantage in a game of tic-tac toe where moves made on Chain A will have different outcomes on Chain B.
+
+### Misc.
+
+-   Always use msg.sender rather than tx.origin
+-   Be very careful not to loop over arrays of undetermined length, and add limits on the size of user inputted data to avoid excessive gas costs.
+-   Test the gas limits of the contract, if the gas used by a function exceeds the block gas limit the funciton will never execute.
+
 ## Resources
 
 ### Writing Tests
@@ -98,3 +158,7 @@
 [Ethereum Smart Contract Security Best Practices](https://consensys.github.io/smart-contract-best-practices/)
 
 [Common Bugs/Attacks and Best Practices](https://sunnya97.gitbooks.io/a-beginner-s-guide-to-ethereum-and-dapp-developme/smart-contract-best-practices.html)
+
+### Saftey Checklist
+
+[Contract Safety and Security Checklist](https://www.kingoftheether.com/contract-safety-checklist.html)
