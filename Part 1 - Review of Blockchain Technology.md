@@ -5,12 +5,12 @@
 - Some examples of Consensus Mechanisms include:
 
 1.  Practical Byzantine Fault Tolerance
-    - Guarentees that consensus can be reached within a network even if a minority of nodes are dishonest or absent.
+    - Guarantees that consensus can be reached within a network even if one third of nodes are dishonest or absent.
 2.  Proof of Work
-    - Particpants only accept valid block when blockhash is less than target number
+    - Participants only accept valid block when blockhash is less than a target number
     - Miners in a network repeatedly hash the block contents and check the output to see if it matches some specific criteria.
     - When the correct block hash is found it is broadcasted throughout the entire network and the miner is awarded.
-    - Blocks are mined a deterministic rate (every 15 seconds in the Ethereum Network)
+    - Blocks are mined at a deterministic rate (every 15 seconds in the Ethereum Network)
 3.  Proof of Stake
     - Currency holders stake some amount of the currency for the chance to validate a block.
     - The block validator is randomly selected by the network but the chance of selection is proportional to the stake.
